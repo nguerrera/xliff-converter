@@ -78,11 +78,6 @@ namespace XliffConverter
             }
         }
 
-        private static void ConvertResx(string resxFile, string xlfDirectory)
-        {
-            ConvertResx(resxFile, xlfDirectory, resxFile);
-        }
-
         private static void ConvertResx(string resxFile, string xlfDirectory, string originalFile)
         {
             bool madeNeutral = false;
@@ -118,20 +113,10 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 </xliff>");
                 }
 
-                try
-                {
-                    var xlfDocument = new XlfDocument(xlfFile);
-                    xlfDocument.Update(resxFile, updatedResourceStateString: "needs-review-translation", addedResourceStateString: "new");
-                    xlfDocument.Save();
-                }
-                catch (NullReferenceException)
-                {
-                    // Temp hack to unblock further development: XliffParser cannot deal with non-string values in resx (WinForms style), it casts them to string using as and null refs.
-                    Console.WriteLine($"Warning: Failed to process {originalFile}");
-                    File.Delete(xlfFile);
-                    return;
-                }
-
+                var xlfDocument = new XlfDocument(xlfFile);
+                xlfDocument.Update(resxFile, updatedResourceStateString: "needs-review-translation", addedResourceStateString: "new");
+                xlfDocument.Save();
+                
                 if (!madeNeutral)
                 {
                     MakeNeutral(xlfFile, Path.Combine(xlfDirectory, $"{originalFileName}.xlf"));
@@ -194,19 +179,36 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             return originalFile.Substring(s_rootDirectory.Length + 1).Replace("\\", "/");
         }
 
+        private static void ConvertResx(string resxFile, string xlfDirectory)
+        {
+            using (var temporaryResxFile = new ResxFile(resxFile))
+            {
+                if (temporaryResxFile.HasStrings)
+                {
+                    ConvertResx(temporaryResxFile.Path, xlfDirectory, resxFile);
+                }
+            }
+        }
+
         private static void ConvertVsct(string vsctFile, string xlfDirectory)
         {
-            using (var resxFile = new TemporaryResxFile(new VsctFile(vsctFile)))
+            using (var resxFile = new ResxFile(new VsctFile(vsctFile)))
             {
-                ConvertResx(resxFile.Path, xlfDirectory, vsctFile);
+                if (resxFile.HasStrings)
+                {
+                    ConvertResx(resxFile.Path, xlfDirectory, vsctFile);
+                }
             }
         }
 
         private static void ConvertXaml(string xamlFile, string xlfDirectory)
         {
-            using (var resxFile = new TemporaryResxFile(new XamlFile(xamlFile)))
+            using (var resxFile = new ResxFile(new XamlFile(xamlFile)))
             {
-                ConvertResx(resxFile.Path, xlfDirectory, xamlFile);
+                if (resxFile.HasStrings)
+                {
+                    ConvertResx(resxFile.Path, xlfDirectory, xamlFile);
+                }
             }
         }
 

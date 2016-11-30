@@ -48,7 +48,7 @@
     <Compile Include="Converter.cs" />
     <Compile Include="ITranslatable.cs" />
     <Compile Include="TranslationUnit.cs" />
-    <Compile Include="TemporaryResxFile.cs" />
+    <Compile Include="ResxFile.cs" />
     <Compile Include="XamlFile.cs" />
     <Compile Include="VsctFile.cs" />
   </ItemGroup>
