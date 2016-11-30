@@ -57,6 +57,14 @@ namespace XliffConverter
                     continue;
                 }
 
+                // remove "locked" strings
+                if (node.Element("comment")?.Value.Equals("{Locked}") == true)
+                {
+                    node.Remove();
+                    changed = true;
+                    continue;
+                }
+
                 // remove empty strings
                 if (string.IsNullOrWhiteSpace(node.Element("value").Value))
                 {
