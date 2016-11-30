@@ -1,0 +1,11 @@
+﻿{
+  "frameworks": {
+    ".NETFramework,Version=v4.6": {}
+  },
+  "runtimes": {
+    "win": {}
+  },
+  "dependencies": {
+    "fmdev.XliffParser": "0.5.2"
+  }
+}
