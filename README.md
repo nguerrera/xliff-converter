@@ -1,6 +1,6 @@
 # xliff-converter
 
-This is a glorified script to convert resx files, vsct files, xaml rule files, and temporary hard-coded LocalizableStrings.cs files to xliff to handoff to the localization team.
+This is a glorified script to convert resx files, vsct files, xaml rule files, and temporary hard-coded LocalizableStrings.cs files to xliff for handoff to the localization team.
 
 It is an interim solution to allow creating the xliff files before we have a centralized solution for integrating the conversion in to the build.
 
