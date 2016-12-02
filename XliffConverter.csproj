@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Converter.cs" />
+    <Compile Include="CSharpFile.cs" />
     <Compile Include="ITranslatable.cs" />
     <Compile Include="TranslationUnit.cs" />
     <Compile Include="ResxFile.cs" />

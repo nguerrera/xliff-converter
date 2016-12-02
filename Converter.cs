@@ -64,6 +64,11 @@ namespace XliffConverter
                 ConvertVsct(vsctFile, xlfDirectory);
             }
 
+            foreach (var csFile in Directory.EnumerateFiles(directory, "LocalizableStrings.cs"))
+            {
+                ConvertCSharp(csFile, xlfDirectory);
+            }
+
             if (directoryName == "Rules")
             {
                 foreach (var xamlFile in Directory.EnumerateFiles(directory, "*.xaml"))
@@ -208,6 +213,25 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
                 if (resxFile.HasStrings)
                 {
                     ConvertResx(resxFile.Path, xlfDirectory, xamlFile);
+                }
+            }
+        }
+
+        private static void ConvertCSharp(string csharpFile, string xlfDirectory)
+        {
+            using (var resxFile = new ResxFile(new CSharpFile(csharpFile)))
+            {
+                if (resxFile.HasStrings)
+                {
+                    // NOTE: Putting a File.Copy of resxFile.Path here will give us the initial resx files 
+                    // once CLI is ready to build with them instead of the temporary LocalizableStrings.cs files. :)
+
+                    // Fake the original file name as resx since these files will be converted to resx
+                    // in source and we want to avoid churn in xlf file when that happens. It also avoids
+                    // confusing .cs.cs.xlf files for cs locale.
+                    string originalFile = Path.ChangeExtension(csharpFile, ".resx");
+
+                    ConvertResx(resxFile.Path, xlfDirectory, originalFile);
                 }
             }
         }
