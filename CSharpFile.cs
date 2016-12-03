@@ -1,10 +1,11 @@
-﻿using Microsoft.CodeAnalysis;
+﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace XliffConverter
 {
@@ -28,8 +29,10 @@ namespace XliffConverter
             
             public override void VisitVariableDeclarator(VariableDeclaratorSyntax node)
             {
-                string id = node.Identifier.Text;
-                string text = ((LiteralExpressionSyntax)(node.Initializer.Value)).Token.Text.Trim('"');
+                var initializer = ((LiteralExpressionSyntax)(node.Initializer.Value));
+                var id = node.Identifier.Text;
+                var text = (string)initializer.Token.Value;
+
                 Units.Add(new TranslationUnit(id, text));
                 base.VisitVariableDeclarator(node);
             }
