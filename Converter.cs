@@ -64,7 +64,7 @@ namespace XliffConverter
                 ConvertVsct(vsctFile, xlfDirectory);
             }
 
-            foreach (var csFile in Directory.EnumerateFiles(directory, "LocalizableStrings.cs"))
+            foreach (var csFile in Directory.EnumerateFiles(directory, "*LocalizableStrings.cs"))
             {
                 ConvertCSharp(csFile, xlfDirectory);
             }
