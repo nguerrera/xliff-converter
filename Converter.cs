@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -12,7 +14,12 @@ namespace XliffConverter
 {
     internal static class Converter
     {
-        private static readonly string[] s_languages = new[] {
+        private static HashSet<string> s_validLanguages = new HashSet<String>(
+            CultureInfo.GetCultures(CultureTypes.AllCultures).Select(c => c.Name),
+            StringComparer.OrdinalIgnoreCase);
+
+        private static readonly string[] s_languages = new[]
+        {
             "cs",
             "de",
             "es",
@@ -31,12 +38,19 @@ namespace XliffConverter
         private const string s_xlfDirectoryName = "xlf";
 
         private static string s_rootDirectory;
+        private static bool s_twoWay;
 
         private static void Main(string[] args)
         {
+            if (args.Length == 2)
+            {
+                s_twoWay = args[0] == "--two-way";
+                args = args.Skip(1).ToArray();
+            }
+
             if (args.Length != 1)
             {
-                Console.WriteLine("Usage: XliffConverter <root directory>");
+                Console.WriteLine("Usage: XliffConverter [--two-way] <root directory>");
             }
 
             s_rootDirectory = Path.GetFullPath(args[0]);
@@ -53,37 +67,51 @@ namespace XliffConverter
             }
 
             string xlfDirectory = Path.Combine(directory, s_xlfDirectoryName);
-
-            foreach (var resxFile in Directory.EnumerateFiles(directory, "*.resx"))
+            foreach (var resxFile in EnumerateNeutralFiles(directory, "*.resx"))
             {
                 ConvertResx(resxFile, xlfDirectory);
             }
 
-            foreach (var vsctFile in Directory.EnumerateFiles(directory, "*.vsct"))
+            foreach (var vsctFile in EnumerateNeutralFiles(directory, "*.vsct"))
             {
                 ConvertVsct(vsctFile, xlfDirectory);
             }
 
-            foreach (var csFile in Directory.EnumerateFiles(directory, "*LocalizableStrings.cs"))
+            foreach (var csFile in EnumerateAllFiles(directory, "*LocalizableStrings.cs"))
             {
                 ConvertCSharp(csFile, xlfDirectory);
             }
 
             if (directoryName == "Rules")
             {
-                foreach (var xamlFile in Directory.EnumerateFiles(directory, "*.xaml"))
+                foreach (var xamlFile in EnumerateAllFiles(directory, "*.xaml"))
                 {
                     ConvertXaml(xamlFile, xlfDirectory);
                 }
             }
-            
+
             foreach (var subdirectory in Directory.EnumerateDirectories(directory))
             {
                 ConvertDirectory(subdirectory);
             }
         }
 
-        private static void ConvertResx(string resxFile, string xlfDirectory, string originalFile)
+        private static IEnumerable<string> EnumerateAllFiles(string directory, string searchPattern)
+        {
+            return Directory.EnumerateFiles(directory, searchPattern);
+        }
+
+        private static IEnumerable<string> EnumerateNeutralFiles(string directory, string searchPattern)
+        {
+            return Directory.EnumerateFiles(directory, searchPattern).Where(f => IsNeutral(f));
+        }
+
+        private static IEnumerable<string> EnumerateLocalizedFiles(string directory, string searchPattern)
+        {
+            return Directory.EnumerateFiles(directory, searchPattern).Where(f => !IsNeutral(f));
+        }
+
+        private static void ConvertResxToXlf(string resxFile, string xlfDirectory, string originalFile)
         {
             bool madeNeutral = false;
             string originalFileName = Path.GetFileName(originalFile);
@@ -139,24 +167,27 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
                             where node.Name.LocalName != null && node.Name.LocalName == "file"
                             select node;
 
-            fileNodes.ToList().ForEach(x =>
+            foreach (var fileNode in fileNodes.ToList())
             {
-                if (x.HasAttributes)
+                if (fileNode.HasAttributes)
                 {
-                    foreach (var attrib in x.Attributes())
+                    foreach (var attribute in fileNode.Attributes())
                     {
-                        if (attrib.Name == "target-language")
-                            attrib.Remove();
+                        if (attribute.Name == "target-language")
+                            attribute.Remove();
                     }
                 }
-            });
+            }
 
             // remove all target nodes
             var targetNodes = from node in doc.Descendants()
                               where node.Name.LocalName != null && node.Name.LocalName == "target"
                               select node;
 
-            targetNodes.ToList().ForEach(x => x.Remove());
+            foreach (var targetNode in targetNodes.ToList())
+            {
+                targetNode.Remove();
+            }
 
             // save
             var fi = new FileInfo(outputFile);
@@ -184,24 +215,66 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             return originalFile.Substring(s_rootDirectory.Length + 1).Replace("\\", "/");
         }
 
+        private static bool IsNeutral(string file)
+        {
+            var withoutExtension = Path.GetFileNameWithoutExtension(file);
+            var possibleLanguage = Path.GetExtension(withoutExtension)?.Trim('.');
+
+            if (string.IsNullOrEmpty(possibleLanguage))
+            {
+                return true;
+            }
+
+            return !s_validLanguages.Contains(possibleLanguage);
+        }
+
         private static void ConvertResx(string resxFile, string xlfDirectory)
         {
+            // convert resx -> xlf
             using (var temporaryResxFile = new ResxFile(resxFile))
             {
                 if (temporaryResxFile.HasStrings)
                 {
-                    ConvertResx(temporaryResxFile.Path, xlfDirectory, resxFile);
+                    ConvertResxToXlf(temporaryResxFile.Path, xlfDirectory, resxFile);
+                }
+                
+            }
+
+            if (s_twoWay)
+            {
+                ConvertXlfToResx(xlfDirectory);
+            }
+        }
+
+        private static void ConvertXlfToResx(string xlfDirectory)
+        {
+            // convert xlf -> resx
+            foreach (var xlfFile in EnumerateLocalizedFiles(xlfDirectory, "*.xlf"))
+            {
+                var xlfDocument = new XlfDocument(xlfFile);
+
+                foreach (var language in s_languages)
+                {
+                    var translatedResxFile =
+                        Path.ChangeExtension(
+                            Path.Combine(
+                                Path.GetDirectoryName(xlfDirectory),
+                                Path.GetFileName(xlfFile)),
+                            ".resx");
+
+                    xlfDocument.SaveAsResX(translatedResxFile);
                 }
             }
         }
 
         private static void ConvertVsct(string vsctFile, string xlfDirectory)
         {
+            // convert vsct -> xlf
             using (var resxFile = new ResxFile(new VsctFile(vsctFile)))
             {
                 if (resxFile.HasStrings)
                 {
-                    ConvertResx(resxFile.Path, xlfDirectory, vsctFile);
+                    ConvertResxToXlf(resxFile.Path, xlfDirectory, vsctFile);
                 }
             }
         }
@@ -212,7 +285,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             {
                 if (resxFile.HasStrings)
                 {
-                    ConvertResx(resxFile.Path, xlfDirectory, xamlFile);
+                    ConvertResxToXlf(resxFile.Path, xlfDirectory, xamlFile);
                 }
             }
         }
@@ -231,7 +304,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
                     // confusing .cs.cs.xlf files for cs locale.
                     string originalFile = Path.ChangeExtension(csharpFile, ".resx");
 
-                    ConvertResx(resxFile.Path, xlfDirectory, originalFile);
+                    ConvertResxToXlf(resxFile.Path, xlfDirectory, originalFile);
                 }
             }
         }
