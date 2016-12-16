@@ -17,6 +17,8 @@ Clone the repo and build. (See above for rationale. This is temporary.)
 XliffConverter <repository root>
 ```
 
+Tip: Save your work and to a full git clean to avoid time spent hunting for things to replace in .gitignored places.
+
 This will scan the repo for resx files (ignoring bin\ and TestAssets), vsct, xaml files in a folder named "Rules", and LocalizableStrings.cs, then convert/sync them with the xliff files in xlf/ subdirectories. (If there are no xlf files yet, they will be created.)
 
 
