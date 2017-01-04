@@ -42,5 +42,31 @@ namespace XliffConverter
                 }
             }
         }
+
+        public void SaveAsTranslated(string translatedPath, IReadOnlyDictionary<string, string> translations)
+        {
+            var document = XDocument.Load(Path);
+
+            foreach (var strings in document.Descendants(s_strings))
+            {
+                string id = strings.Parent.Attribute("id").Value;
+
+                foreach (var child in strings.Elements())
+                {
+                    XName name = child.Name;
+
+                    if (name == s_canonicalName)
+                    {
+                        // See https://msdn.microsoft.com/en-us/library/bb491712.aspx
+                        // LocCanonicalName can be used to specify a localized alternative.
+                        continue;
+                    }
+
+                    child.Value = translations[$"{id}|{name.LocalName}"];
+                }
+            }
+
+            document.Save(translatedPath);
+        }
     }
 }

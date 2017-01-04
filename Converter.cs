@@ -151,7 +151,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
                 var xlfDocument = new XlfDocument(xlfFile);
                 xlfDocument.Update(resxFile, updatedResourceStateString: "needs-review-translation", addedResourceStateString: "new");
                 xlfDocument.Save();
-                
+
                 if (!madeNeutral)
                 {
                     MakeNeutral(xlfFile, Path.Combine(xlfDirectory, $"{originalFileName}.xlf"));
@@ -232,7 +232,6 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         private static void ConvertResx(string resxFile, string xlfDirectory)
         {
-            // convert resx -> xlf
             using (var temporaryResxFile = new ResxFile(resxFile))
             {
                 if (temporaryResxFile.HasStrings)
@@ -252,17 +251,14 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             {
                 var xlfDocument = new XlfDocument(xlfFile);
 
-                foreach (var language in s_languages)
-                {
-                    var translatedResxFile =
-                        Path.ChangeExtension(
-                            Path.Combine(
-                                Path.GetDirectoryName(xlfDirectory),
-                                Path.GetFileName(xlfFile)),
-                            ".resx");
+                var translatedResxFile =
+                    Path.ChangeExtension(
+                        Path.Combine(
+                            Path.GetDirectoryName(xlfDirectory),
+                            Path.GetFileName(xlfFile)),
+                        ".resx");
 
-                    xlfDocument.SaveAsResX(translatedResxFile);
-                }
+                xlfDocument.SaveAsResX(translatedResxFile);
             }
         }
 
@@ -275,6 +271,30 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
                 {
                     ConvertResxToXlf(resxFile.Path, xlfDirectory, vsctFile);
                 }
+
+                if (s_twoWay)
+                {
+                    ConvertXlfToVsct(xlfDirectory, vsctFile);
+                }
+            }
+        }
+
+        private static void ConvertXlfToVsct(string xlfDirectory, string vsctFilePath)
+        {
+            var vsctFile = new VsctFile(vsctFilePath);
+
+            foreach (var xlfFile in EnumerateAllFiles(xlfDirectory, $"{Path.GetFileName(vsctFilePath)}.*.xlf"))
+            {
+                var language = Path.GetExtension(Path.GetFileNameWithoutExtension(xlfFile)).TrimStart('.');
+
+                var translatedVsctFilePath =
+                    Path.ChangeExtension(
+                        Path.Combine(
+                            Path.GetDirectoryName(xlfDirectory),
+                            Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(xlfFile))),
+                        $"{language}.vsct");
+
+                vsctFile.SaveAsTranslated(translatedVsctFilePath, XlfFile.GetTranslations(xlfFile));
             }
         }
 

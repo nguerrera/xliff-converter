@@ -50,6 +50,7 @@
     <Compile Include="ITranslatable.cs" />
     <Compile Include="TranslationUnit.cs" />
     <Compile Include="ResxFile.cs" />
+    <Compile Include="XlfFile.cs" />
     <Compile Include="XamlFile.cs" />
     <Compile Include="VsctFile.cs" />
   </ItemGroup>
