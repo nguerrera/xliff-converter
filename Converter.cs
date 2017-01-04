@@ -306,6 +306,26 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
                 {
                     ConvertResxToXlf(resxFile.Path, xlfDirectory, xamlFile);
                 }
+
+                if (s_twoWay)
+                {
+                    ConvertXlfToXaml(xlfDirectory, xamlFile);
+                }
+            }
+        }
+
+        private static void ConvertXlfToXaml(string xlfDirectory, string xamlFilePath)
+        {
+            var xamlFile = new XamlFile(xamlFilePath);
+
+            foreach (var xlfFile in EnumerateAllFiles(xlfDirectory, $"{Path.GetFileName(xamlFilePath)}.*.xlf"))
+            {
+                var language = Path.GetExtension(Path.GetFileNameWithoutExtension(xlfFile)).TrimStart('.');
+                var translatedDirectory = Path.Combine(Path.GetDirectoryName(xlfDirectory), language);
+                var translatedXamlFilePath = Path.Combine(translatedDirectory, Path.GetFileName(xamlFilePath));
+
+                Directory.CreateDirectory(translatedDirectory);
+                xamlFile.SaveAsTranslated(translatedXamlFilePath, XlfFile.GetTranslations(xlfFile));
             }
         }
 

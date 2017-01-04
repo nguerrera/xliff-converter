@@ -33,6 +33,26 @@ namespace XliffConverter
             }
         }
 
+        public void SaveAsTranslated(string translatedPath, IReadOnlyDictionary<string, string> translations)
+        {
+            var document = XDocument.Load(Path);
+
+            foreach (var element in document.Descendants())
+            {
+                foreach (var attribute in element.Attributes())
+                {
+                    if (XmlName(attribute) != "DisplayName" && XmlName(attribute) != "Description")
+                    {
+                        continue;
+                    }
+
+                    attribute.Value = translations[GenerateId(attribute)];
+                }
+            }
+
+            document.Save(translatedPath);
+        }
+
         private string GenerateId(XAttribute attribute)
         {
             XElement parent = attribute.Parent;
