@@ -40,21 +40,23 @@ namespace XliffConverter
         private static string s_rootDirectory;
         private static bool s_twoWay;
 
-        private static void Main(string[] args)
+        private static int Main(string[] args)
         {
-            if (args.Length == 2)
+            if (args.Length >= 1 && args[0] == "--two-way")
             {
-                s_twoWay = args[0] == "--two-way";
+                s_twoWay = true;
                 args = args.Skip(1).ToArray();
             }
 
             if (args.Length != 1)
             {
                 Console.WriteLine("Usage: XliffConverter [--two-way] <root directory>");
+                return 1;
             }
 
             s_rootDirectory = Path.GetFullPath(args[0]);
             ConvertDirectory(s_rootDirectory);
+            return 0;
         }
 
         private static void ConvertDirectory(string directory)
