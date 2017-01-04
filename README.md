@@ -1,6 +1,6 @@
 # xliff-converter
 
-This is a glorified script to convert resx files, vsct files, xaml rule files, and temporary hard-coded LocalizableStrings.cs files to xliff for handoff to the localization team.
+This is a glorified script to convert resx files, vsct files, xaml rule files, and temporary hard-coded LocalizableStrings.cs files to xliff and back.
 
 It is an interim solution to allow creating the xliff files before we have a centralized solution for integrating the conversion in to the build.
 
@@ -13,11 +13,18 @@ Clone the repo and build. (See above for rationale. This is temporary.)
 
 
 # Usage
+
+## Convert to xlf
 ```
 XliffConverter <repository root>
 ```
 
-Tip: Save your work and to a full git clean to avoid time spent hunting for things to replace in .gitignored places.
+## Convert to xlf and back
+```
+XliffConverter --two-way <repository root>
+```
+
+Tip: Save your work and do a full git clean to avoid time spent hunting for things to replace in .gitignored places.
 
 This will scan the repo for resx files (ignoring bin\ and TestAssets), vsct, xaml files in a folder named "Rules", and LocalizableStrings.cs, then convert/sync them with the xliff files in xlf/ subdirectories. (If there are no xlf files yet, they will be created.)
 
