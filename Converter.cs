@@ -238,20 +238,17 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
                 if (temporaryResxFile.HasStrings)
                 {
                     ConvertResxToXlf(temporaryResxFile.Path, xlfDirectory, resxFile);
+                    if (s_twoWay)
+                    {
+                        ConvertXlfToResx(xlfDirectory, resxFile);
+                    }
                 }
-                
-            }
-
-            if (s_twoWay)
-            {
-                ConvertXlfToResx(xlfDirectory);
             }
         }
 
-        private static void ConvertXlfToResx(string xlfDirectory)
+        private static void ConvertXlfToResx(string xlfDirectory, string resxFile)
         {
-            // convert xlf -> resx
-            foreach (var xlfFile in EnumerateLocalizedFiles(xlfDirectory, "*.xlf"))
+            foreach (var xlfFile in EnumerateAllFiles(xlfDirectory, $"{Path.GetFileNameWithoutExtension(resxFile)}.*.xlf"))
             {
                 var xlfDocument = new XlfDocument(xlfFile);
 
