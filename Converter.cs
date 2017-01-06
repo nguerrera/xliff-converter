@@ -108,10 +108,15 @@ namespace XliffConverter
             return Directory.EnumerateFiles(directory, searchPattern).Where(f => IsNeutral(f));
         }
 
+        private static IEnumerable<string> EnumerateLocalizedFiles(string directory, string searchPattern)
+        {
+            return Directory.EnumerateFiles(directory, searchPattern).Where(f => !IsNeutral(f));
+        }
+
         private static void ConvertResxToXlf(string resxFile, string xlfDirectory, string originalFile)
         {
             bool madeNeutral = false;
-            string originalFileName = GetFileNameWithoutEn(originalFile);
+            string originalFileName = Path.GetFileName(originalFile);
 
             if (Path.GetExtension(originalFileName) == ".resx")
             {
@@ -222,7 +227,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
                 return true;
             }
 
-            return possibleLanguage == "en" || !s_validLanguages.Contains(possibleLanguage);
+            return !s_validLanguages.Contains(possibleLanguage);
         }
 
         private static void ConvertResx(string resxFile, string xlfDirectory)
@@ -242,7 +247,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         private static void ConvertXlfToResx(string xlfDirectory, string resxFile)
         {
-            foreach (var xlfFile in EnumerateAllFiles(xlfDirectory, $"{GetFileNameWithoutEnOrExtension(resxFile)}.*.xlf"))
+            foreach (var xlfFile in EnumerateAllFiles(xlfDirectory, $"{Path.GetFileNameWithoutExtension(resxFile)}.*.xlf"))
             {
                 var xlfDocument = new XlfDocument(xlfFile);
 
@@ -257,20 +262,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             }
         }
 
-        private static string GetFileNameWithoutEn(string path)
-        {
-            // In some cases the source will have neutral resources in en satellite (required by current VSIX tooling)
-            // Strip off the .en. so that it gets replaced with the localized language and not appended to it.
-            return Path.GetFileName(path).Replace(".en.", ".");
-        }
-
-        private static string GetFileNameWithoutEnOrExtension(string path)
-        {
-            return Path.GetFileNameWithoutExtension(GetFileNameWithoutEn(path));
-        }
-
         private static void ConvertVsct(string vsctFile, string xlfDirectory)
         {
+            // convert vsct -> xlf
             using (var resxFile = new ResxFile(new VsctFile(vsctFile)))
             {
                 if (resxFile.HasStrings)
@@ -289,7 +283,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         {
             var vsctFile = new VsctFile(vsctFilePath);
 
-            foreach (var xlfFile in EnumerateAllFiles(xlfDirectory, $"{GetFileNameWithoutEn(vsctFilePath)}.*.xlf"))
+            foreach (var xlfFile in EnumerateAllFiles(xlfDirectory, $"{Path.GetFileName(vsctFilePath)}.*.xlf"))
             {
                 var language = Path.GetExtension(Path.GetFileNameWithoutExtension(xlfFile)).TrimStart('.');
 
