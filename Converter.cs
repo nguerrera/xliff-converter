@@ -247,8 +247,14 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         private static void ConvertXlfToResx(string xlfDirectory, string resxFile)
         {
-            foreach (var xlfFile in EnumerateAllFiles(xlfDirectory, $"{Path.GetFileNameWithoutExtension(resxFile)}.*.xlf"))
+            foreach (var xlfFile in EnumerateLocalizedFiles(xlfDirectory, $"{Path.GetFileNameWithoutExtension(resxFile)}.*.xlf"))
             {
+                if (xlfFile.Contains(".vsct.") != resxFile.Contains(".vsct."))
+                {
+                    // quick fix to deal with vsct and resx with same base name
+                    continue;
+                }
+
                 var xlfDocument = new XlfDocument(xlfFile);
 
                 var translatedResxFile =
