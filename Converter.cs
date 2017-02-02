@@ -308,10 +308,8 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         {
             using (var resxFile = new ResxFile(new XamlFile(xamlFile)))
             {
-                if (resxFile.HasStrings)
-                {
-                    ConvertResxToXlf(resxFile.Path, xlfDirectory, xamlFile);
-                }
+                // always do this for xaml files because we need a localized copy even if there are no strings
+                ConvertResxToXlf(resxFile.Path, xlfDirectory, xamlFile);
 
                 if (s_twoWay)
                 {
