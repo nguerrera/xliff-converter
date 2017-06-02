@@ -1,3 +1,7 @@
+# NOTE
+
+This tool is obsolete and being replaced by https://github.com/dotnet/xliff-tasks
+
 # xliff-converter
 
 This is a glorified script to convert resx files, vsct files, xaml rule files, and temporary hard-coded LocalizableStrings.cs files to xliff and back.
